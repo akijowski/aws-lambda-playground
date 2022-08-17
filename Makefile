@@ -5,9 +5,12 @@ AWS_ACCOUNT_ID=$$(aws sts get-caller-identity --profile adam | jq -r .Account)
 REGION=us-east-2
 
 synth:
-	npx aws-cdk synth -q
+	npx aws-cdk synth
 
-sam-build: synth
+synth-sam:
+	npx aws-cdk synth --no-staging > template.cdk.yaml
+
+build: synth-sam
 	sam build
 
 bootstrap:
@@ -28,6 +31,6 @@ build-stack:
 test-stack:
 	go test ./infra -tags=stack
 
-invoke-helloworld: sam-build
+invoke-helloworld: build
 	sam local invoke --no-event \
 	HelloWorldFunction

@@ -15,3 +15,5 @@ With CDK, it appears that SAM takes on a smaller role in development.  The CDK r
 > *SAM may also be necessary for building Lambda binaries, this is undetermined at this time*
 
 Further information of how SAM works with CDK can be found [in the SAM documentation](https://docs.aws.amazon.com/serverless-application-model/latest/developerguide/serverless-cdk.html)
+
+Github Issue thread talking about how CDK replaces or can't replicate some of the features of SAM [#716](https://github.com/aws/aws-cdk/issues/716)

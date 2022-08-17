@@ -2,6 +2,8 @@ package serverless
 
 import (
 	"fmt"
+	"os"
+	"path/filepath"
 
 	"github.com/aws/aws-cdk-go/awscdk/v2/awslambda"
 	"github.com/aws/aws-cdk-go/awscdk/v2/awslogs"
@@ -22,12 +24,18 @@ type LambdaOpts struct {
 	LogRetentionDays    float64
 }
 
-func NewLambdaFunction(scope constructs.Construct, id *string, opts *LambdaOpts) awssam.CfnFunction {
+func NewSAMLambdaFunction(scope constructs.Construct, id *string, opts *LambdaOpts) awssam.CfnFunction {
+	cwd, err := os.Getwd()
+	if err != nil {
+		panic(err)
+	}
+	fullCodeURI := filepath.Join(cwd, opts.CodeURI)
 	l := awssam.NewCfnFunction(scope, id, &awssam.CfnFunctionProps{
 		Runtime:      awslambda.Runtime_GO_1_X().Name(),
+		Timeout:      jsii.Number(5),
 		FunctionName: jsii.String(opts.FunctionName),
 		Description:  jsii.String(opts.FunctionDescription),
-		CodeUri:      awslambda.AssetCode_FromAsset(jsii.String(opts.CodeURI), nil).Path(),
+		CodeUri:      awslambda.NewAssetCode(jsii.String(fullCodeURI), nil).Path(),
 		Handler:      jsii.String(opts.Handler),
 	})
 
@@ -39,3 +47,19 @@ func NewLambdaFunction(scope constructs.Construct, id *string, opts *LambdaOpts)
 	}
 	return l
 }
+
+// func NewLambdaFunction(scope constructs.Construct, id *string, opts *LambdaOpts) awslambda.Function {
+// 	cwd, err := os.Getwd()
+// 	if err != nil {
+// 		panic(err)
+// 	}
+// 	fullCodeURI := filepath.Join(cwd, opts.CodeURI)
+// 	return awslambda.NewFunction(scope, id, &awslambda.FunctionProps{
+// 		Runtime:      awslambda.Runtime_GO_1_X(),
+// 		Timeout:      awscdk.Duration_Seconds(jsii.Number(5)),
+// 		FunctionName: jsii.String(opts.FunctionName),
+// 		Description:  jsii.String(opts.FunctionDescription),
+// 		Code:         awslambda.AssetCode_FromAsset(jsii.String(fullCodeURI), nil),
+// 		Handler:      jsii.String(opts.Handler),
+// 	})
+// }

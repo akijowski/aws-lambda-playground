@@ -17,6 +17,7 @@
 # CDK asset staging directory
 .cdk.staging
 cdk.out
+template.cdk.yaml
 
 # AWS SAM build folder
 .aws-sam/
