@@ -1,0 +1,6 @@
+{
+    "go.buildFlags": [
+        "-tags=stack"
+    ],
+    "go.formatTool": "goimports"
+}

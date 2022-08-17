@@ -1,5 +1,5 @@
 {
-  "app": "go mod download && go run aws-lambda-playground.go",
+  "app": "go mod download && go run ./infra/aws-lambda-playground.go",
   "watch": {
     "include": [
       "**"

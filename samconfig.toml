@@ -1,0 +1,13 @@
+version = 0.1
+[default]
+[default.global.parameters]
+template = "./cdk.out/AwsLambdaPlaygroundStack.template.json"
+
+[default.build]
+[default.build.parameters]
+cached=true
+
+[default.local_invoke]
+[default.local_invoke.parameters]
+debug = true
+template = "./.aws-sam/build/template.yaml"

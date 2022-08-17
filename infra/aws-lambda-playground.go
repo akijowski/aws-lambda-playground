@@ -1,10 +1,16 @@
+//go:build stack
+
 package main
 
 import (
+	"fmt"
+
+	"github.com/akijowski/aws-lambda-playground/infra/serverless"
 	"github.com/aws/aws-cdk-go/awscdk/v2"
+	"github.com/aws/jsii-runtime-go"
+
 	// "github.com/aws/aws-cdk-go/awscdk/v2/awssqs"
 	"github.com/aws/constructs-go/constructs/v10"
-	// "github.com/aws/jsii-runtime-go"
 )
 
 type AwsLambdaPlaygroundStackProps struct {
@@ -19,7 +25,14 @@ func NewAwsLambdaPlaygroundStack(scope constructs.Construct, id string, props *A
 	stack := awscdk.NewStack(scope, &id, &sprops)
 
 	// The code that defines your stack goes here
-
+	serverless.NewLambdaFunction(stack, jsii.String("HelloWorldFunction"), &serverless.LambdaOpts{
+		FunctionName:        fmt.Sprintf("%s-hello-world", *awscdk.Aws_STACK_NAME()),
+		FunctionDescription: "Simple Hello World Lambda",
+		CodeURI:             "../functions/helloWorld",
+		Handler:             "helloWorld",
+		CreateLogGroup:      true,
+		LogRetentionDays:    7,
+	})
 	// example resource
 	// queue := awssqs.NewQueue(stack, jsii.String("AwsLambdaPlaygroundQueue"), &awssqs.QueueProps{
 	// 	VisibilityTimeout: awscdk.Duration_Seconds(jsii.Number(300)),
@@ -33,7 +46,11 @@ func main() {
 
 	NewAwsLambdaPlaygroundStack(app, "AwsLambdaPlaygroundStack", &AwsLambdaPlaygroundStackProps{
 		awscdk.StackProps{
-			Env: env(),
+			Description: jsii.String("Lambda Samples"),
+			Env:         env(),
+			Tags: &map[string]*string{
+				"Project": jsii.String("aws-lambda-playground"),
+			},
 		},
 	})
 

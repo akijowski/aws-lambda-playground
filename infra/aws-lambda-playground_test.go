@@ -1,3 +1,5 @@
+//go:build stack
+
 package main
 
 // import (

@@ -1,12 +1,17 @@
-# Welcome to your CDK Go project!
+# AWS Lambda Playground
 
-This is a blank project for CDK development with Go.
+This is intended to be a sample proving ground for different aspects of AWS Lambda.
 
-The `cdk.json` file tells the CDK toolkit how to execute your app.
+1. AWS CDK + AWS SAM
+1. AWS AppConfig Lambda Extension
+1. Caching Lambda Extension
+1. Building Go Lambda in a container
+1. Building a Go Lambda to use ARM Lambda instances
 
-## Useful commands
+## AWS CDK + AWS SAM
 
- * `cdk deploy`      deploy this stack to your default AWS account/region
- * `cdk diff`        compare deployed stack with current state
- * `cdk synth`       emits the synthesized CloudFormation template
- * `go test`         run unit tests
+With CDK, it appears that SAM takes on a smaller role in development.  The CDK remains the tool that manages creating the template and deploying the CloudFormation stack.  SAM is really only needed when wanting to run local instances of a Lambda for testing.
+
+> *SAM may also be necessary for building Lambda binaries, this is undetermined at this time*
+
+Further information of how SAM works with CDK can be found [in the SAM documentation](https://docs.aws.amazon.com/serverless-application-model/latest/developerguide/serverless-cdk.html)
