@@ -25,13 +25,11 @@ func NewAwsLambdaPlaygroundStack(scope constructs.Construct, id string, props *A
 	stack := awscdk.NewStack(scope, &id, &sprops)
 
 	// The code that defines your stack goes here
-	serverless.NewSAMLambdaFunction(stack, jsii.String("HelloWorldFunction"), &serverless.LambdaOpts{
+	serverless.NewLambdaFunction(stack, jsii.String("HelloWorldFunction"), &serverless.LambdaOpts{
 		FunctionName:        fmt.Sprintf("%s-hello-world", *stack.StackName()),
 		FunctionDescription: "Simple Hello World Lambda",
-		CodeURI:             "./functions/helloWorld",
+		CodeURI:             "./build/helloWorld/",
 		Handler:             "helloWorld",
-		CreateLogGroup:      true,
-		LogRetentionDays:    7,
 	})
 	// example resource
 	// queue := awssqs.NewQueue(stack, jsii.String("AwsLambdaPlaygroundQueue"), &awssqs.QueueProps{

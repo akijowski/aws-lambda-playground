@@ -1,0 +1,26 @@
+#!/usr/bin/env bash
+
+set -eou pipefail
+
+PROJECT_ROOT=${PWD#/*}
+PROJECT_ROOT=${PROJECT_ROOT:-/}
+
+build () {
+    local dir=$1
+    GOOS=linux go build -o=../build/$dir/ ./$dir
+}
+
+do_work () {
+    local startDir=$1
+    echo -e "Using project root: $PROJECT_ROOT"
+    pushd "$startDir"
+    for dir in * ; do
+        if [ -d "$dir" ]; then
+            echo -e "Building Go binary in $dir/ to $PROJECT_ROOT/build/$dir/"
+            build $dir
+        fi
+    done
+    popd
+}
+
+do_work "$@"

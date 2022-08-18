@@ -1,12 +1,7 @@
 version = 0.1
 [default]
 [default.global.parameters]
-
-
-[default.build]
-[default.build.parameters]
 template = "./template.cdk.yaml"
-cached=true
 
 [default.local_invoke]
 [default.local_invoke.parameters]

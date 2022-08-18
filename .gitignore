@@ -17,6 +17,7 @@
 # CDK asset staging directory
 .cdk.staging
 cdk.out
+# custom template for SAM
 template.cdk.yaml
 
 # AWS SAM build folder
@@ -24,6 +25,7 @@ template.cdk.yaml
 
 # Go build artifact
 aws-lambda-playground
+build/*
 
 # General
 .DS_Store
