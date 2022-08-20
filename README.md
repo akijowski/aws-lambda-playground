@@ -2,7 +2,7 @@
 
 This is intended to be a sample proving ground for different aspects of AWS Lambda.
 
-1. AWS CDK + AWS SAM
+1. AWS CDK + AWS SAM :white_check_mark:
 1. AWS AppConfig Lambda Extension
 1. Caching Lambda Extension
 1. Building Go Lambda in a container

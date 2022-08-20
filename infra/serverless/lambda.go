@@ -68,9 +68,11 @@ func NewLambdaFunction(scope constructs.Construct, id *string, opts *LambdaOpts)
 		Handler:      jsii.String(opts.Handler),
 		Code: awslambda.NewAssetCode(jsii.String(mustCwd()), &awss3assets.AssetOptions{
 			Bundling: &awscdk.BundlingOptions{
+				// See: https://github.com/aws/aws-cdk/issues/20907
 				Image:   awslambda.Runtime_GO_1_X().BundlingImage(),
 				Command: jsii.Strings("bash", "-c", fmt.Sprintf("GOOS=linux go build -o /asset-output/%s %s", opts.Handler, opts.CodeURI)),
 				Local:   &LocalBundler{CodeUri: opts.CodeURI, Handler: opts.Handler},
+				User:    jsii.String("root"),
 			},
 		}),
 		LogRetention: awslogs.RetentionDays_FIVE_DAYS,
