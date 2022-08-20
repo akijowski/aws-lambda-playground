@@ -28,7 +28,7 @@ func NewAwsLambdaPlaygroundStack(scope constructs.Construct, id string, props *A
 	serverless.NewLambdaFunction(stack, jsii.String("HelloWorldFunction"), &serverless.LambdaOpts{
 		FunctionName:        fmt.Sprintf("%s-hello-world", *stack.StackName()),
 		FunctionDescription: "Simple Hello World Lambda",
-		CodeURI:             "./build/helloWorld/",
+		CodeURI:             "./functions/helloWorld",
 		Handler:             "helloWorld",
 	})
 	// example resource
@@ -42,7 +42,9 @@ func NewAwsLambdaPlaygroundStack(scope constructs.Construct, id string, props *A
 func main() {
 	app := awscdk.NewApp(nil)
 
-	NewAwsLambdaPlaygroundStack(app, "AwsLambdaPlaygroundStack", &AwsLambdaPlaygroundStackProps{
+	stackName := app.Node().TryGetContext(jsii.String("stack-name")).(string)
+
+	NewAwsLambdaPlaygroundStack(app, stackName, &AwsLambdaPlaygroundStackProps{
 		awscdk.StackProps{
 			Description: jsii.String("Lambda Samples"),
 			Env:         env(),
