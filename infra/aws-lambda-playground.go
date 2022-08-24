@@ -5,6 +5,7 @@ package main
 import (
 	"fmt"
 
+	"github.com/akijowski/aws-lambda-playground/infra/config"
 	"github.com/akijowski/aws-lambda-playground/infra/serverless"
 	"github.com/aws/aws-cdk-go/awscdk/v2"
 	"github.com/aws/jsii-runtime-go"
@@ -35,6 +36,26 @@ func NewAwsLambdaPlaygroundStack(scope constructs.Construct, id string, props *A
 	// queue := awssqs.NewQueue(stack, jsii.String("AwsLambdaPlaygroundQueue"), &awssqs.QueueProps{
 	// 	VisibilityTimeout: awscdk.Duration_Seconds(jsii.Number(300)),
 	// })
+
+	config.NewAppConfig(stack, "AppConfigDemo").
+		WithApplication(&config.AppConfigApplicationInput{
+			Name:        "app-config-demo",
+			Description: "AppConfig Demo project",
+		}).
+		WithEnvironment(&config.AppConfigEnvironmentInput{
+			Name:        "app-config-demo",
+			Description: "AppConfig Demo environment",
+		}).
+		WithHostedFreeformProfile(&config.AppConfigProfileInput{
+			Name:        "app-config-demo",
+			Description: "AppConfig Demo profile",
+		}).
+		WithSimpleDeployStrategy("app-config-demo").
+		WithHostedConfiguration(&config.AppConfigConfigurationInput{
+			Description: "AppConfig Demo configuration",
+			ContentType: "application/json",
+		}).
+		Deploy("a deployment for AppConfig Demo")
 
 	return stack
 }
