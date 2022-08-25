@@ -2,7 +2,10 @@ package main
 
 import (
 	"context"
+	"errors"
 	"log"
+	"os"
+	"time"
 
 	"github.com/aws/aws-lambda-go/lambda"
 	"github.com/aws/aws-lambda-go/lambdacontext"
@@ -15,13 +18,14 @@ var (
 
 type SampleConfig struct {
 	Enabled      bool   `json:"enabled"`
-	StringName   string `json:"string_name"`
+	StringValue  string `json:"string_value"`
 	NumericValue int    `json:"numeric_value"`
 }
 
 type Response struct {
 	Config    *SampleConfig `json:"config"`
 	ColdStart bool          `json:"cold_start"`
+	InvokedAt time.Time     `json:"invoked_at"`
 }
 
 func handler(ctx context.Context) (*Response, error) {
@@ -29,18 +33,22 @@ func handler(ctx context.Context) (*Response, error) {
 	if ok {
 		logger.Printf("%+v\n", lc)
 	}
-	config, err := getConfig(ctx)
+	configPath := os.Getenv("APP_CONFIG_PATH")
+	if configPath == "" {
+		return nil, errors.New("APP_CONFIG_PATH is not set")
+	}
+	config, err := getConfig(ctx, configPath)
 	if err != nil {
 		return nil, err
 	}
-	resp := &Response{ColdStart: isColdStart, Config: config}
+	resp := &Response{ColdStart: isColdStart, Config: config, InvokedAt: time.Now()}
 	isColdStart = false
 	return resp, nil
 }
 
 func main() {
 	logger = log.Default()
-	logger.SetPrefix("hello_world ")
+	logger.SetPrefix("app_config_demo ")
 	logger.SetFlags(log.Lshortfile)
 	isColdStart = true
 	lambda.Start(handler)

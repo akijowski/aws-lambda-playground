@@ -13,6 +13,11 @@ import (
 	"github.com/aws/jsii-runtime-go"
 )
 
+var (
+	GO_Runtime       = awslambda.Runtime_GO_1_X()
+	PROVIDED_Runtime = awslambda.Runtime_PROVIDED_AL2()
+)
+
 // LambdaOpts is a collection of options for configuring an AWS Lambda Function.
 //
 // CodeURI is the relative path from the project root to the source directory.
@@ -22,6 +27,7 @@ type LambdaOpts struct {
 	FunctionDescription string
 	CodeURI             string
 	Handler             string
+	Runtime             awslambda.Runtime
 }
 
 // LocalBundler satisfies the [awscdk.ILocalBundling] interface by implementing TryBundle.
@@ -61,7 +67,7 @@ func (lb *LocalBundler) TryBundle(outputDir *string, options *awscdk.BundlingOpt
 func NewLambdaFunction(scope constructs.Construct, id *string, opts *LambdaOpts) awslambda.Function {
 
 	l := awslambda.NewFunction(scope, id, &awslambda.FunctionProps{
-		Runtime:      awslambda.Runtime_GO_1_X(),
+		Runtime:      opts.Runtime,
 		Timeout:      awscdk.Duration_Seconds(jsii.Number(5)),
 		FunctionName: jsii.String(opts.FunctionName),
 		Description:  jsii.String(opts.FunctionDescription),
@@ -69,7 +75,7 @@ func NewLambdaFunction(scope constructs.Construct, id *string, opts *LambdaOpts)
 		Code: awslambda.NewAssetCode(jsii.String(mustCwd()), &awss3assets.AssetOptions{
 			Bundling: &awscdk.BundlingOptions{
 				// See: https://github.com/aws/aws-cdk/issues/20907
-				Image:   awslambda.Runtime_GO_1_X().BundlingImage(),
+				Image:   opts.Runtime.BundlingImage(),
 				Command: jsii.Strings("bash", "-c", fmt.Sprintf("GOOS=linux go build -o /asset-output/%s %s", opts.Handler, opts.CodeURI)),
 				Local:   &LocalBundler{CodeUri: opts.CodeURI, Handler: opts.Handler},
 				User:    jsii.String("root"),

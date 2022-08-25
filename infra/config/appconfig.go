@@ -17,6 +17,7 @@ type AppConfig struct {
 	Configuration      awsappconfig.CfnHostedConfigurationVersion
 	Profile            awsappconfig.CfnConfigurationProfile
 	DeploymentStrategy awsappconfig.CfnDeploymentStrategy
+	Deployment         awsappconfig.CfnDeployment
 }
 
 type AppConfigApplicationInput struct {
@@ -37,7 +38,7 @@ type AppConfigProfileInput struct {
 type AppConfigConfigurationInput struct {
 	Description string
 	ContentType string
-	Content     string
+	ContentPath string
 }
 
 func NewAppConfig(stack constructs.Construct, prefix string) *AppConfig {
@@ -80,28 +81,26 @@ func (ac *AppConfig) WithSimpleDeployStrategy(name string) *AppConfig {
 		GrowthFactor:                jsii.Number(50),
 		Description:                 jsii.String("Sample deploy strategy"),
 		FinalBakeTimeInMinutes:      jsii.Number(1),
-		GrowthType:                  jsii.String("Linear"),
+		GrowthType:                  jsii.String("LINEAR"),
 		ReplicateTo:                 jsii.String("NONE"),
 	})
 	return ac
 }
 
 func (ac *AppConfig) WithHostedConfiguration(input *AppConfigConfigurationInput) *AppConfig {
-	content := awscdk.NewAssetStaging(ac.Scope, ac.logicalID("Asset"), &awscdk.AssetStagingProps{
-		SourcePath: jsii.String("reference/config/config.json"),
-	})
+	c := loadFromFile(input.ContentPath)
 	ac.Configuration = awsappconfig.NewCfnHostedConfigurationVersion(ac.Scope, ac.logicalID("Config"), &awsappconfig.CfnHostedConfigurationVersionProps{
 		ApplicationId:          ac.Application.Ref(),
 		ConfigurationProfileId: ac.Profile.Ref(),
 		Description:            jsii.String(input.Description),
 		ContentType:            jsii.String(input.ContentType),
-		Content:                content.RelativeStagedPath(ac.Application.Stack()),
+		Content:                c,
 	})
 	return ac
 }
 
-func (ac *AppConfig) Deploy(description string) awsappconfig.CfnDeployment {
-	return awsappconfig.NewCfnDeployment(ac.Scope, ac.logicalID("Deployment"), &awsappconfig.CfnDeploymentProps{
+func (ac *AppConfig) Deploy(description string) *AppConfig {
+	deploy := awsappconfig.NewCfnDeployment(ac.Scope, ac.logicalID("Deployment"), &awsappconfig.CfnDeploymentProps{
 		Description:            jsii.String(description),
 		ApplicationId:          ac.Application.Ref(),
 		EnvironmentId:          ac.Environment.Ref(),
@@ -109,6 +108,20 @@ func (ac *AppConfig) Deploy(description string) awsappconfig.CfnDeployment {
 		ConfigurationProfileId: ac.Profile.Ref(),
 		ConfigurationVersion:   ac.Configuration.Ref(),
 	})
+
+	ac.Deployment = deploy
+
+	awscdk.NewCfnOutput(ac.Scope, jsii.String("AppConfigID"), &awscdk.CfnOutputProps{
+		Description: jsii.String("ID for the AppConfig Application"),
+		Value:       ac.Application.Ref(),
+	})
+
+	return ac
+}
+
+func (ac *AppConfig) ConfigurationPath() *string {
+	path := fmt.Sprintf("applications/%s/environments/%s/configurations/%s", *ac.Application.Name(), *ac.Environment.Name(), *ac.Profile.Name())
+	return jsii.String(path)
 }
 
 func (ac *AppConfig) logicalID(name string) *string {

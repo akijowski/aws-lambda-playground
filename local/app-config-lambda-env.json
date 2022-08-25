@@ -1,0 +1,5 @@
+{
+    "AppConfigDemoFunction": {
+        "AWS_APPCONFIG_EXTENSION_LOG_LEVEL": "debug"
+    }
+}

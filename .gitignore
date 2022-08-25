@@ -28,6 +28,9 @@ template.cdk.yaml
 aws-lambda-playground
 build/*
 
+# Lambda invocations
+response.json
+
 # General
 .DS_Store
 .AppleDouble

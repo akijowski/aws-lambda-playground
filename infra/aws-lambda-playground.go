@@ -8,6 +8,7 @@ import (
 	"github.com/akijowski/aws-lambda-playground/infra/config"
 	"github.com/akijowski/aws-lambda-playground/infra/serverless"
 	"github.com/aws/aws-cdk-go/awscdk/v2"
+	"github.com/aws/aws-cdk-go/awscdk/v2/awslambda"
 	"github.com/aws/jsii-runtime-go"
 
 	// "github.com/aws/aws-cdk-go/awscdk/v2/awssqs"
@@ -31,31 +32,44 @@ func NewAwsLambdaPlaygroundStack(scope constructs.Construct, id string, props *A
 		FunctionDescription: "Simple Hello World Lambda",
 		CodeURI:             "./functions/helloWorld",
 		Handler:             "helloWorld",
+		Runtime:             serverless.GO_Runtime,
 	})
-	// example resource
-	// queue := awssqs.NewQueue(stack, jsii.String("AwsLambdaPlaygroundQueue"), &awssqs.QueueProps{
-	// 	VisibilityTimeout: awscdk.Duration_Seconds(jsii.Number(300)),
-	// })
 
-	config.NewAppConfig(stack, "AppConfigDemo").
+	// Using a provided runtime requires the handler to be named bootstrap
+	configDemo := serverless.NewLambdaFunction(stack, jsii.String("AppConfigDemoFunction"), &serverless.LambdaOpts{
+		FunctionName:        fmt.Sprintf("%s-app-config-demo", *stack.StackName()),
+		FunctionDescription: "Lambda to test the App Config Layer or Extension",
+		CodeURI:             "./functions/appConfigDemo",
+		Handler:             "bootstrap",
+		Runtime:             serverless.PROVIDED_Runtime,
+	})
+
+	appConfig := config.NewAppConfig(stack, "AppConfigDemo").
 		WithApplication(&config.AppConfigApplicationInput{
 			Name:        "app-config-demo",
 			Description: "AppConfig Demo project",
 		}).
 		WithEnvironment(&config.AppConfigEnvironmentInput{
-			Name:        "app-config-demo",
+			Name:        "stage",
 			Description: "AppConfig Demo environment",
 		}).
 		WithHostedFreeformProfile(&config.AppConfigProfileInput{
-			Name:        "app-config-demo",
+			Name:        "main",
 			Description: "AppConfig Demo profile",
 		}).
-		WithSimpleDeployStrategy("app-config-demo").
+		WithSimpleDeployStrategy("allAtOnce").
 		WithHostedConfiguration(&config.AppConfigConfigurationInput{
 			Description: "AppConfig Demo configuration",
 			ContentType: "application/json",
+			ContentPath: "reference/config/config.json",
 		}).
 		Deploy("a deployment for AppConfig Demo")
+
+	appConfigExtension := awslambda.LayerVersion_FromLayerVersionArn(stack, jsii.String("AppConfigDemoLayer"), jsii.String("arn:aws:lambda:us-east-2:728743619870:layer:AWS-AppConfig-Extension:50"))
+	configDemo.AddLayers(appConfigExtension)
+	configDemo.AddToRolePolicy(config.AppConfigDataPolicy())
+	configDemo.AddEnvironment(jsii.String("APP_CONFIG_PATH"), appConfig.ConfigurationPath(), nil)
+	configDemo.AddEnvironment(jsii.String("AWS_APPCONFIG_EXTENSION_LOG_LEVEL"), jsii.String("debug"), nil)
 
 	return stack
 }

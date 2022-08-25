@@ -35,9 +35,24 @@ invoke-helloworld-local: synth-sam
 	sam local invoke --no-event \
 	HelloWorldFunction
 
+invoke-app-config-local: synth-sam
+	sam local invoke --no-event \
+	AppConfigDemoFunction \
+	--env-vars local/app-config-lambda-env.json \
+	--profile adam \
+	--region us-east-2
+
 invoke-helloworld:
 	aws lambda invoke \
 	--function-name $$(cat ./cdk-outputs.json| jq --raw-output '."aws-lambda-playground"."HelloWorldFunctionARN"') \
+	--payload '{}' \
+	--profile adam \
+	--no-cli-pager \
+	response.json
+
+invoke-app-config:
+	aws lambda invoke \
+	--function-name $$(cat ./cdk-outputs.json| jq --raw-output '."aws-lambda-playground"."AppConfigDemoFunctionARN"') \
 	--payload '{}' \
 	--profile adam \
 	--no-cli-pager \
