@@ -27,21 +27,26 @@ func NewAwsLambdaPlaygroundStack(scope constructs.Construct, id string, props *A
 	stack := awscdk.NewStack(scope, &id, &sprops)
 
 	// The code that defines your stack goes here
-	serverless.NewLambdaFunction(stack, jsii.String("HelloWorldFunction"), &serverless.LambdaOpts{
+	serverless.NewLambdaFunction(stack, "HelloWorldFunction", &serverless.LambdaOpts{
 		FunctionName:        fmt.Sprintf("%s-hello-world", *stack.StackName()),
 		FunctionDescription: "Simple Hello World Lambda",
 		CodeURI:             "./functions/helloWorld",
 		Handler:             "helloWorld",
-		Runtime:             serverless.GO_Runtime,
+		BuildOpts: serverless.BuildOpts{
+			Environment: map[string]*string{"GOARCH": jsii.String("amd64")},
+		},
 	})
 
 	// Using a provided runtime requires the handler to be named bootstrap
-	configDemo := serverless.NewLambdaFunction(stack, jsii.String("AppConfigDemoFunction"), &serverless.LambdaOpts{
+	configDemo := serverless.NewLambdaFunction(stack, "AppConfigDemoFunction", &serverless.LambdaOpts{
 		FunctionName:        fmt.Sprintf("%s-app-config-demo", *stack.StackName()),
 		FunctionDescription: "Lambda to test the App Config Layer or Extension",
 		CodeURI:             "./functions/appConfigDemo",
 		Handler:             "bootstrap",
 		Runtime:             serverless.PROVIDED_Runtime,
+		BuildOpts: serverless.BuildOpts{
+			Environment: map[string]*string{"GOARCH": jsii.String("amd64")},
+		},
 	})
 
 	appConfig := config.NewAppConfig(stack, "AppConfigDemo").
@@ -70,6 +75,23 @@ func NewAwsLambdaPlaygroundStack(scope constructs.Construct, id string, props *A
 	configDemo.AddToRolePolicy(config.AppConfigDataPolicy())
 	configDemo.AddEnvironment(jsii.String("APP_CONFIG_PATH"), appConfig.ConfigurationPath(), nil)
 	configDemo.AddEnvironment(jsii.String("AWS_APPCONFIG_EXTENSION_LOG_LEVEL"), jsii.String("debug"), nil)
+
+	// Go runtime is not compatible with ARM64 Lambdas.  Must use provided AL2.
+	serverless.NewLambdaFunction(stack, "ArmLambdaDemo", &serverless.LambdaOpts{
+		FunctionName:        fmt.Sprintf("%s-arm64-demo", *stack.StackName()),
+		FunctionDescription: "Lambda running on ARM64 Graviton instances",
+		CodeURI:             "./functions/armLambda",
+		Handler:             "bootstrap",
+		Runtime:             serverless.PROVIDED_Runtime,
+		Architecture:        serverless.ARM64_Architecture,
+		BuildOpts: serverless.BuildOpts{
+			ForceContainer:      true,
+			BundleImageOverride: serverless.GO_Runtime.BundlingImage(),
+			Environment: map[string]*string{
+				"GOARCH": jsii.String("arm64"),
+			},
+		},
+	})
 
 	return stack
 }

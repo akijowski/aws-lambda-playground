@@ -8,7 +8,7 @@ synth:
 	npx aws-cdk synth -q
 
 synth-sam:
-	npx aws-cdk synth --no-staging > template.cdk.yaml
+	npx aws-cdk synth --no-staging
 
 clean:
 	rm -rf ./cdk.out/ ./build/ template.cdk.yaml
@@ -42,6 +42,10 @@ invoke-app-config-local: synth-sam
 	--profile adam \
 	--region us-east-2
 
+invoke-arm-local: synth-sam
+	sam local invoke --no-event \
+	ArmLambdaDemo \
+
 invoke-helloworld:
 	aws lambda invoke \
 	--function-name $$(cat ./cdk-outputs.json| jq --raw-output '."aws-lambda-playground"."HelloWorldFunctionARN"') \
@@ -53,6 +57,14 @@ invoke-helloworld:
 invoke-app-config:
 	aws lambda invoke \
 	--function-name $$(cat ./cdk-outputs.json| jq --raw-output '."aws-lambda-playground"."AppConfigDemoFunctionARN"') \
+	--payload '{}' \
+	--profile adam \
+	--no-cli-pager \
+	response.json
+
+invoke-arm:
+	aws lambda invoke \
+	--function-name $$(cat ./cdk-outputs.json| jq --raw-output '."aws-lambda-playground"."ArmLambdaDemoARN"') \
 	--payload '{}' \
 	--profile adam \
 	--no-cli-pager \

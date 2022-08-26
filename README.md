@@ -2,11 +2,12 @@
 
 This is intended to be a sample proving ground for different aspects of AWS Lambda.
 
-1. [x] AWS CDK + AWS SAM :white_check_mark:
-1. [x] AWS AppConfig Lambda Extension :white_check_mark:
+1. :white_check_mark: AWS CDK + AWS SAM
+1. :white_check_mark: AWS AppConfig Lambda Extension
 1. Caching Lambda Extension
-1. Building Go Lambda in a container
+1. Building Go Lambda in a container with AWS CDK
 1. Building a Go Lambda to use ARM Lambda instances
+1. Blue/Green deployments with CodeDeploy and Lambda
 
 ## AWS CDK + AWS SAM
 
@@ -77,3 +78,7 @@ To invoke the Lambda in AWS:
 ```bash
 make invoke-app-config
 ```
+
+## Caching Lambda Extension
+
+TODO: https://github.com/aws-samples/aws-lambda-extensions/tree/main/cache-extension-demo

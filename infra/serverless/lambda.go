@@ -14,8 +14,10 @@ import (
 )
 
 var (
-	GO_Runtime       = awslambda.Runtime_GO_1_X()
-	PROVIDED_Runtime = awslambda.Runtime_PROVIDED_AL2()
+	GO_Runtime         = awslambda.Runtime_GO_1_X()
+	PROVIDED_Runtime   = awslambda.Runtime_PROVIDED_AL2()
+	X86_Architecture   = awslambda.Architecture_X86_64()
+	ARM64_Architecture = awslambda.Architecture_ARM_64()
 )
 
 // LambdaOpts is a collection of options for configuring an AWS Lambda Function.
@@ -28,6 +30,14 @@ type LambdaOpts struct {
 	CodeURI             string
 	Handler             string
 	Runtime             awslambda.Runtime
+	Architecture        awslambda.Architecture
+	BuildOpts
+}
+
+type BuildOpts struct {
+	ForceContainer      bool
+	Environment         map[string]*string
+	BundleImageOverride awscdk.DockerImage
 }
 
 // LocalBundler satisfies the [awscdk.ILocalBundling] interface by implementing TryBundle.
@@ -36,8 +46,9 @@ type LambdaOpts struct {
 // The implementation of the interface must be a struct as it must be a marshalable object in Go,
 // therefore a functional approach is not possible.
 type LocalBundler struct {
-	CodeUri string
-	Handler string
+	CodeUri     string
+	Handler     string
+	environment []string
 }
 
 // TryBundle is used to build the Lambda function in the local environment.  It returns `false` if unable to build the function,
@@ -47,7 +58,7 @@ type LocalBundler struct {
 func (lb *LocalBundler) TryBundle(outputDir *string, options *awscdk.BundlingOptions) *bool {
 	checkCmd := exec.Command("go", "version")
 	buildCmd := exec.Command("go", "build", "-o", fmt.Sprintf("%s/%s", *outputDir, lb.Handler), lb.CodeUri)
-	buildCmd.Env = append(os.Environ(), "GOOS=linux", "GOARCH=amd64")
+	buildCmd.Env = append(os.Environ(), lb.environment...)
 
 	if err := checkCmd.Run(); err != nil {
 		fmt.Printf("check error: %s\n", err)
@@ -64,31 +75,64 @@ func (lb *LocalBundler) TryBundle(outputDir *string, options *awscdk.BundlingOpt
 }
 
 // NewLambdaFunction builds a Go Lambda with sensible defaults.
-func NewLambdaFunction(scope constructs.Construct, id *string, opts *LambdaOpts) awslambda.Function {
+func NewLambdaFunction(scope constructs.Construct, id string, opts *LambdaOpts) awslambda.Function {
 
-	l := awslambda.NewFunction(scope, id, &awslambda.FunctionProps{
+	if opts.Architecture == nil {
+		opts.Architecture = X86_Architecture
+	}
+	if opts.Runtime == nil {
+		opts.Runtime = GO_Runtime
+	}
+	// This should be set, always
+	opts.BuildOpts.Environment["GOOS"] = jsii.String("linux")
+
+	l := awslambda.NewFunction(scope, jsii.String(id), &awslambda.FunctionProps{
 		Runtime:      opts.Runtime,
+		Architecture: opts.Architecture,
 		Timeout:      awscdk.Duration_Seconds(jsii.Number(5)),
 		FunctionName: jsii.String(opts.FunctionName),
 		Description:  jsii.String(opts.FunctionDescription),
 		Handler:      jsii.String(opts.Handler),
+		// TODO: The asset hash is based on the directory that is passed in this function.
 		Code: awslambda.NewAssetCode(jsii.String(mustCwd()), &awss3assets.AssetOptions{
 			Bundling: &awscdk.BundlingOptions{
 				// See: https://github.com/aws/aws-cdk/issues/20907
-				Image:   opts.Runtime.BundlingImage(),
-				Command: jsii.Strings("bash", "-c", fmt.Sprintf("GOOS=linux go build -o /asset-output/%s %s", opts.Handler, opts.CodeURI)),
-				Local:   &LocalBundler{CodeUri: opts.CodeURI, Handler: opts.Handler},
-				User:    jsii.String("root"),
+				Image:       getBundlingImage(opts),
+				Command:     jsii.Strings("bash", "-c", fmt.Sprintf("go build -o /asset-output/%s %s", opts.Handler, opts.CodeURI)),
+				Local:       getLocalBundler(opts),
+				User:        jsii.String("root"),
+				Environment: &opts.Environment,
 			},
 		}),
 		LogRetention: awslogs.RetentionDays_FIVE_DAYS,
 		Tracing:      awslambda.Tracing_ACTIVE,
 	})
 
-	awscdk.NewCfnOutput(scope, jsii.String(fmt.Sprintf("%sARN", *id)), &awscdk.CfnOutputProps{
+	awscdk.NewCfnOutput(scope, jsii.String(fmt.Sprintf("%sARN", id)), &awscdk.CfnOutputProps{
 		Description: jsii.String(fmt.Sprintf("Lambda Function ARN for %s", opts.FunctionName)),
 		Value:       l.FunctionArn(),
 	})
 
 	return l
+}
+
+func getBundlingImage(opts *LambdaOpts) awscdk.DockerImage {
+	bundleImage := opts.Runtime.BundlingImage()
+	if opts.BundleImageOverride != nil {
+		bundleImage = opts.BundleImageOverride
+	}
+	return bundleImage
+}
+
+func getLocalBundler(opts *LambdaOpts) *LocalBundler {
+	var localBunder *LocalBundler
+	if !opts.BuildOpts.ForceContainer {
+		localBunder = &LocalBundler{CodeUri: opts.CodeURI, Handler: opts.Handler}
+		bundlerEnv := make([]string, 0)
+		for k, v := range opts.BuildOpts.Environment {
+			bundlerEnv = append(bundlerEnv, fmt.Sprintf("%s=%s", k, *v))
+		}
+		localBunder.environment = bundlerEnv
+	}
+	return localBunder
 }

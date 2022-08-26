@@ -1,7 +1,7 @@
 version = 0.1
 [default]
 [default.global.parameters]
-template = "./template.cdk.yaml"
+template = "./cdk.out/aws-lambda-playground.template.json"
 
 [default.local_invoke]
 [default.local_invoke.parameters]
