@@ -83,8 +83,15 @@ func NewLambdaFunction(scope constructs.Construct, id string, opts *LambdaOpts) 
 	if opts.Runtime == nil {
 		opts.Runtime = GO_Runtime
 	}
+	if opts.BuildOpts.Environment == nil {
+		opts.BuildOpts.Environment = make(map[string]*string)
+	}
 	// This should be set, always
 	opts.BuildOpts.Environment["GOOS"] = jsii.String("linux")
+	// If not set, provide a default
+	if _, ok := opts.BuildOpts.Environment["GOARCH"]; !ok {
+		opts.BuildOpts.Environment["GOARCH"] = jsii.String("amd64")
+	}
 
 	l := awslambda.NewFunction(scope, jsii.String(id), &awslambda.FunctionProps{
 		Runtime:      opts.Runtime,

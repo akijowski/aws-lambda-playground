@@ -32,9 +32,6 @@ func NewAwsLambdaPlaygroundStack(scope constructs.Construct, id string, props *A
 		FunctionDescription: "Simple Hello World Lambda",
 		CodeURI:             "./functions/helloWorld",
 		Handler:             "helloWorld",
-		BuildOpts: serverless.BuildOpts{
-			Environment: map[string]*string{"GOARCH": jsii.String("amd64")},
-		},
 	})
 
 	// Using a provided runtime requires the handler to be named bootstrap
@@ -44,9 +41,6 @@ func NewAwsLambdaPlaygroundStack(scope constructs.Construct, id string, props *A
 		CodeURI:             "./functions/appConfigDemo",
 		Handler:             "bootstrap",
 		Runtime:             serverless.PROVIDED_Runtime,
-		BuildOpts: serverless.BuildOpts{
-			Environment: map[string]*string{"GOARCH": jsii.String("amd64")},
-		},
 	})
 
 	appConfig := config.NewAppConfig(stack, "AppConfigDemo").

@@ -5,8 +5,8 @@ This is intended to be a sample proving ground for different aspects of AWS Lamb
 1. :white_check_mark: AWS CDK + AWS SAM
 1. :white_check_mark: AWS AppConfig Lambda Extension
 1. Caching Lambda Extension
-1. Building Go Lambda in a container with AWS CDK
-1. Building a Go Lambda to use ARM Lambda instances
+1. :white_check_mark: Building Go Lambda in a container with AWS CDK
+1. :white_check_mark: Building a Go Lambda to use ARM Lambda instances
 1. Blue/Green deployments with CodeDeploy and Lambda
 
 ## AWS CDK + AWS SAM
@@ -82,3 +82,36 @@ make invoke-app-config
 ## Caching Lambda Extension
 
 TODO: https://github.com/aws-samples/aws-lambda-extensions/tree/main/cache-extension-demo
+
+## Building Go Lambda in a container with AWS CDK
+
+To build a Go Lambda in a container, it requires providing bundling options when declaring Lambda asset code in the `awslambda.Function` constructor.
+To accomplish this I modified the options my `NewLambdaFunction` uses to include a boolean field.  When set it will set the `localBundler` to `nil`, which effectively forces a container build.
+The alternative is for the `localBundler` to return a `false` value, which tells the CDK that local bundling failed and will fall back to a container build.
+
+## Building a Go Lambda to use ARM Lambda instances
+
+To build a Go Lambda for ARM64 architectures, two things must be configured:
+
+1. The compiled Go code must be compatible with Linux/ARM64
+1. The runtime must be Provided.AL2
+
+The first requirement is accomplished by calling `go build` with `GOOS=linux` and `GOARCH=arm64`.
+The second is changing the Lambda runtime to `provided`.
+
+In this case, the function code is built in the Go runtime bundling Docker image, which provides all the tooling needed to build a function binary.
+The function is then configured to load the binary in a Provided.AL2 Lambda runtime environment.
+
+### Make Commands
+
+To run a local Lambda container in AWS SAM:
+
+```bash
+make invoke-arm-local
+```
+
+To invoke the Lambda in AWS:
+
+```bash
+make invoke-arm
+```
