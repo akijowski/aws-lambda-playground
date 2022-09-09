@@ -29,8 +29,7 @@ func hashDirectory(root string, h hash.Hash) (string, error) {
 				return err
 			}
 			defer file.Close()
-			buf := make([]byte, 30*1024)
-			if _, err := io.CopyBuffer(h, file, buf); err != nil {
+			if _, err := io.Copy(h, file); err != nil {
 				return err
 			}
 			sum := h.Sum(nil)
