@@ -44,7 +44,7 @@ make invoke-helloworld
 - The extension, through caching, can save requests to AppConfig
 - AppConfig also supports feature flags, which open up new opportunities for deployment and application behavior
 
-It is not all :sun: sunshine though.  There are some issues to take in to consideration.
+It is not all :sunny: sunshine though.  There are some issues to take in to consideration.
 
 ### Many AppConfig Resources
 

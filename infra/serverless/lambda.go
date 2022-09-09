@@ -1,6 +1,7 @@
 package serverless
 
 import (
+	"crypto/md5"
 	"fmt"
 	"os"
 	"os/exec"
@@ -93,6 +94,13 @@ func NewLambdaFunction(scope constructs.Construct, id string, opts *LambdaOpts) 
 		opts.BuildOpts.Environment["GOARCH"] = jsii.String("amd64")
 	}
 
+	// Use a custom hashing function to get consistent builds
+	hash, err := doCustomHash(opts.CodeURI)
+	if err != nil {
+		panic(err)
+	}
+	fmt.Printf("hash for %s: %q\n", opts.CodeURI, hash)
+
 	l := awslambda.NewFunction(scope, jsii.String(id), &awslambda.FunctionProps{
 		Runtime:      opts.Runtime,
 		Architecture: opts.Architecture,
@@ -100,7 +108,7 @@ func NewLambdaFunction(scope constructs.Construct, id string, opts *LambdaOpts) 
 		FunctionName: jsii.String(opts.FunctionName),
 		Description:  jsii.String(opts.FunctionDescription),
 		Handler:      jsii.String(opts.Handler),
-		// TODO: The asset hash is based on the directory that is passed in this function.
+		// The asset hash is based on the directory that is passed in this function by default.
 		Code: awslambda.NewAssetCode(jsii.String(mustCwd()), &awss3assets.AssetOptions{
 			Bundling: &awscdk.BundlingOptions{
 				// See: https://github.com/aws/aws-cdk/issues/20907
@@ -110,6 +118,7 @@ func NewLambdaFunction(scope constructs.Construct, id string, opts *LambdaOpts) 
 				User:        jsii.String("root"),
 				Environment: &opts.Environment,
 			},
+			AssetHash: jsii.String(hash),
 		}),
 		LogRetention: awslogs.RetentionDays_FIVE_DAYS,
 		Tracing:      awslambda.Tracing_ACTIVE,
@@ -142,4 +151,8 @@ func getLocalBundler(opts *LambdaOpts) *LocalBundler {
 		localBunder.environment = bundlerEnv
 	}
 	return localBunder
+}
+
+func doCustomHash(root string) (string, error) {
+	return hashDirectory(root, md5.New())
 }
