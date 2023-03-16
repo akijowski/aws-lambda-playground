@@ -16,11 +16,17 @@ clean:
 deploy: synth
 	npx aws-cdk deploy --profile adam --outputs-file ./cdk-outputs.json
 
+destroy: synth
+	npx aws-cdk destroy --profile adam
+
 bootstrap:
 	npx aws-cdk bootstrap --profile adam aws://$(AWS_ACCOUNT_ID)/$(REGION)
 
 ls:
 	npx aws-cdk ls --long
+
+cdk-help:
+	npx aws-cdk -h
 
 doctor:
 	npx aws-cdk doctor
